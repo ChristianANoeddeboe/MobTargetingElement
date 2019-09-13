@@ -1,0 +1,16 @@
+[
+{
+  "modid": "mobtargetingelement",
+  "name": "Mob Targeting Element",
+  "description": "Shows name of the mob, picture and health in a nice way.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Angercraft"],
+  "credits": "The Forge and FML guys, for being awesome and helpful!",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
