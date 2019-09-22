@@ -1,32 +1,36 @@
 package angercraft.mobtargetingelement;
 
-import angercraft.mobtargetingelement.proxy.*;
+import angercraft.mobtargetingelement.config.GuiConfig;
+import angercraft.mobtargetingelement.config.Keybinds;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.Mod.Instance;
-import net.minecraftforge.fml.common.SidedProxy;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import net.minecraftforge.fml.ModLoadingContext;
 
-@Mod(modid = Reference.MOD_ID, name = Reference.NAME, version = Reference.VERSION, acceptedMinecraftVersions = Reference.MCVERSION)
-public class MobTargetingElement {
+@Mod("mobtargetingelement")
+public class MobTargetingElement
+{
+    private static final Logger LOGGER = LogManager.getLogger();
 
-    @Instance
-    public static MobTargetingElement instance;
+    public MobTargetingElement() {
+        // Register the setup method for modloading
+        GuiConfig.register(ModLoadingContext.get());
 
-    public static Logger logger;
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
 
-    @SidedProxy(clientSide = Reference.CLIENT_PROXY_CLASS)
-    private static IProxy proxy;
-
-    @EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
-        logger = event.getModLog();
+        // Register ourselves for server and other game events we are interested in
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
-    @EventHandler
-    public void init(FMLInitializationEvent event) {
-        proxy.init();
+    @SubscribeEvent
+    public void setup(final FMLCommonSetupEvent event)
+    {
+
     }
+
 }

@@ -3,20 +3,66 @@ package angercraft.mobtargetingelement.client;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererManager;
+import net.minecraft.command.arguments.EntitySelector;
+import net.minecraft.command.arguments.EntitySelectorParser;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.EntitySelectors;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.item.ItemFrameEntity;
+import net.minecraft.entity.projectile.ProjectileHelper;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.*;
+import net.minecraftforge.common.command.IEntitySelectorType;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
 public class MouseOver {
 
-    private static final Minecraft mc = Minecraft.getMinecraft();
+    private static final Minecraft mc = Minecraft.getInstance();
 
+    public Entity getEntityMouseOver(float partialTicks, double reachDistance) {
+        Entity entity = this.mc.getRenderViewEntity();
+        Entity pointedEntity = null;
+        if (entity != null) {
+            if (mc.world != null) {
+                mc.getProfiler().startSection("pick");
+                mc.objectMouseOver = entity.func_213324_a(reachDistance, partialTicks, false);
+                Vec3d vec3d = entity.getEyePosition(partialTicks);
+
+                double d1 = reachDistance;
+
+                d1 = d1 * d1;
+                if (mc.objectMouseOver != null) {
+                    d1 = mc.objectMouseOver.getHitVec().squareDistanceTo(vec3d);
+                }
+
+                Vec3d vec3d1 = entity.getLook(1.0F);
+                Vec3d vec3d2 = vec3d.add(vec3d1.x * reachDistance, vec3d1.y * reachDistance, vec3d1.z * reachDistance);
+
+                AxisAlignedBB axisalignedbb = entity.getBoundingBox().expand(vec3d1.scale(reachDistance)).grow(1.0D, 1.0D, 1.0D);
+                EntityRayTraceResult entityraytraceresult = ProjectileHelper.func_221273_a(entity, vec3d, vec3d2, axisalignedbb, (p_215312_0_) -> {
+                    return !p_215312_0_.isSpectator() && p_215312_0_.canBeCollidedWith();
+                }, d1);
+                if (entityraytraceresult != null) {
+                    Entity entity1 = entityraytraceresult.getEntity();
+                    Vec3d vec3d3 = entityraytraceresult.getHitVec();
+                    double d2 = vec3d.squareDistanceTo(vec3d3);
+                    if (d2 < d1 || mc.objectMouseOver == null) {
+                        mc.objectMouseOver = entityraytraceresult;
+                        if (entity1 instanceof LivingEntity) {
+                            pointedEntity = entity1;
+                        }
+                    }
+                }
+                mc.getProfiler().endSection();
+            }
+        }
+        return pointedEntity;
+    }
+
+    /*
     public Entity getEntityLookingAt(float partialTicks, double distance)
     {
         Entity pointedEntity = null;
@@ -26,24 +72,23 @@ public class MouseOver {
         {
             if (mc.world != null)
             {
-                mc.mcProfiler.startSection("pick");
+                mc.getProfiler().startSection("pick");
                 //this.mc.pointedEntity = null;
-                double d0 = distance;
-                RayTraceResult objectMouseOver = entity.rayTrace(d0, partialTicks);
-                Vec3d vec3d = entity.getPositionEyes(partialTicks);
+                RayTraceResult objectMouseOver = entity.func_213324_a(distance, partialTicks, false);
+                Vec3d vec3d = entity.getEyePosition(partialTicks);
 
-                double d1 = d0;
+                double d1 = distance;
 
                 if (objectMouseOver != null)
                 {
-                    d1 = objectMouseOver.hitVec.distanceTo(vec3d);
+                    d1 = objectMouseOver.getHitVec().distanceTo(vec3d);
                 }
 
                 Vec3d vec3d1 = entity.getLook(1.0F);
-                Vec3d vec3d2 = vec3d.addVector(vec3d1.x * d0, vec3d1.y * d0, vec3d1.z * d0);
+                Vec3d vec3d2 = vec3d.add(vec3d1.x * distance, vec3d1.y * distance, vec3d1.z * distance);
                 pointedEntity = null;
                 Vec3d vec3d3 = null;
-                List<Entity> list = mc.world.getEntitiesInAABBexcluding(entity, entity.getEntityBoundingBox().expand(vec3d1.x * d0, vec3d1.y * d0, vec3d1.z * d0).grow(1.0D, 1.0D, 1.0D), Predicates.and(EntitySelectors.NOT_SPECTATING, new Predicate<Entity>()
+                List<Entity> list = mc.world.getEntitiesInAABBexcluding(entity, entity.getBoundingBox().expand(vec3d1.x * distance, vec3d1.y * distance, vec3d1.z * distance).grow(1.0D, 1.0D, 1.0D), Predicates.and(EntitySelectors.NOT_SPECTATING, new Predicate<Entity>()
                 {
                     public boolean apply(@Nullable Entity p_apply_1_)
                     {
@@ -53,7 +98,7 @@ public class MouseOver {
                 double d2 = d1;
 
                 for (Entity entity1 : list) {
-                    AxisAlignedBB axisalignedbb = entity1.getEntityBoundingBox().grow(entity1.getCollisionBorderSize());
+                    AxisAlignedBB axisalignedbb = entity1.getBoundingBox().grow(entity1.getCollisionBorderSize());
                     RayTraceResult raytraceresult = axisalignedbb.calculateIntercept(vec3d, vec3d2);
 
                     if (axisalignedbb.contains(vec3d)) {
@@ -98,13 +143,13 @@ public class MouseOver {
                     {
                         pointedEntity = pointedEntity;
                     }
-                }
+                }*
 
-                 */
+
 
                 //this.mc.mcProfiler.endSection();
             }
         }
         return pointedEntity;
-    }
+    }*/
 }

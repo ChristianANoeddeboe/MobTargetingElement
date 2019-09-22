@@ -2,27 +2,25 @@ package angercraft.mobtargetingelement.client.gui;
 
 import angercraft.mobtargetingelement.Reference;
 import angercraft.mobtargetingelement.config.GuiConfig;
+import com.mojang.blaze3d.platform.GLX;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.EnumCreatureType;
+import net.minecraft.client.renderer.entity.EntityRendererManager;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 
 import java.text.DecimalFormat;
 
-public class GuiTargetInfo extends Gui {
+public class GuiTargetInfo extends AbstractGui {
 
-    private static final Minecraft mc = Minecraft.getMinecraft();
+    private static final Minecraft mc = Minecraft.getInstance();
 
     private static final ResourceLocation GUI_RESOURCES = new ResourceLocation(Reference.MOD_ID, "textures/gui/hud/element.png");
 
-    public void drawTarget(EntityLiving entity) {
+    public void drawTarget(LivingEntity entity) {
         if(entity == null) {
             return;
         }
@@ -32,9 +30,9 @@ public class GuiTargetInfo extends Gui {
 
         mc.getTextureManager().bindTexture(GUI_RESOURCES);
 
-        this.drawTexturedModalRect(containerCornerX, containerCornerY, 0, 0, 75, 72);
+        this.blit(containerCornerX, containerCornerY, 0, 0, 75, 72);
 
-        this.drawTexturedModalRect(containerCornerX+85, containerCornerY+13, 75, 0, 160, 46);
+        this.blit(containerCornerX+85, containerCornerY+13, 75, 0, 160, 46);
 
         this.drawHealth(entity, containerCornerX+89, containerCornerY+38);
 
@@ -43,7 +41,7 @@ public class GuiTargetInfo extends Gui {
         if(entity.isChild()) {
             entityName = "Baby ";
         }
-        entityName += entity.getName();
+        entityName += entity.getName().getString();
 
         GL11.glPushMatrix();
         GL11.glScalef(1.2f, 1.2f, 1.2f);
@@ -51,15 +49,15 @@ public class GuiTargetInfo extends Gui {
         GL11.glPopMatrix();
 
         float scale;
-        if(entity.width > entity.height) {
-            scale = 2/entity.width*25;
+        if(entity.getWidth() > entity.getHeight()) {
+            scale = 2/entity.getWidth()*25;
         } else {
-            scale = 2/entity.height*25;
+            scale = 2/entity.getHeight()*25;
         }
         if(scale > 40) {
             scale = 40;
         }
-        float addY = 2*entity.height;
+        float addY = 2*entity.getHeight();
 
         GlStateManager.enableBlend();
         //GlStateManager.enableDepth();
@@ -69,28 +67,24 @@ public class GuiTargetInfo extends Gui {
 
         //GlStateManager.disableBlend();
 
-        mc.getTextureManager().bindTexture(ICONS);
+        mc.getTextureManager().bindTexture(GUI_ICONS_LOCATION);
     }
 
-    private void drawHealth(EntityLiving entity, int x, int y) {
+    private void drawHealth(LivingEntity entity, int x, int y) {
         float healthNum = entity.getHealth();
         float percentHealthLeft = healthNum/entity.getMaxHealth();
-
-        // TODO Find way to display if entity is aggressive or not towards player.
-        boolean aggressive = entity.isCreatureType(EnumCreatureType.MONSTER, false) && !EnumCreatureType.MONSTER.getPeacefulCreature();
-
 
         int width = 152;
 
         int displayWidth = (int) (percentHealthLeft*width);
 
-        drawTexturedModalRect(x, y, 75, 46, displayWidth, 17);
+        blit(x, y, 75, 46, displayWidth, 17);
 
         String healthText = "";
-        if(GuiConfig.healthText == GuiConfig.HealthText.PERCENTAGE) {
+        if(GuiConfig.CLIENT.healthText.get() == GuiConfig.HealthText.PERCENTAGE) {
             healthText = ((int)(percentHealthLeft*100))+"%";
         }
-        if(GuiConfig.healthText == GuiConfig.HealthText.ABSOLUTE) {
+        if(GuiConfig.CLIENT.healthText.get() == GuiConfig.HealthText.ABSOLUTE) {
             if(healthNum % 1 != 0) {
                 DecimalFormat decimalFormat = new DecimalFormat("#.00");
                 healthText = decimalFormat.format(healthNum)+"/"+((int)entity.getMaxHealth());
@@ -105,30 +99,31 @@ public class GuiTargetInfo extends Gui {
         GL11.glPopMatrix();
     }
 
-    public void drawEntityOnScreen(int posX, int posY, int scale, EntityLivingBase ent) {
+    public void drawEntityOnScreen(int posX, int posY, int scale, LivingEntity ent) {
         GlStateManager.enableColorMaterial();
         GlStateManager.pushMatrix();
-        GlStateManager.translate((float)posX, (float)posY, 50.0F);
-        GlStateManager.scale((float)(-scale), (float)scale, (float)scale);
-        GlStateManager.rotate(180.0F, 0.0F, 0.0F, 1.0F);
+        GlStateManager.translatef((float)posX, (float)posY, 50.0F);
+        GlStateManager.scalef((float)(-scale), (float)scale, (float)scale);
+        GlStateManager.rotatef(180.0F, 0.0F, 0.0F, 1.0F);
         float f = ent.renderYawOffset;
         float f1 = ent.rotationYaw;
         float f2 = ent.rotationPitch;
         float f3 = ent.prevRotationYawHead;
         float f4 = ent.rotationYawHead;
-        GlStateManager.rotate(135.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotatef(135.0F, 0.0F, 1.0F, 0.0F);
         RenderHelper.enableStandardItemLighting();
-        GlStateManager.rotate(-135.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotatef(-135.0F, 0.0F, 1.0F, 0.0F);
 
-        GlStateManager.rotate(-((float)Math.atan((double)(-60 / 40.0F))) * 20.0F, 1.0F, 0.0F, 0.0F); //15, 1.0F, 0.0F, 0.0F);
+        GlStateManager.rotatef(-((float)Math.atan((double)(-60 / 40.0F))) * 20.0F, 1.0F, 0.0F, 0.0F); //15, 1.0F, 0.0F, 0.0F);
         ent.renderYawOffset = -45;//(float)Math.atan((double)(mouseX / 40.0F)) * 20.0F;
         ent.rotationYaw = -45;//(float)Math.atan((double)(mouseX / 40.0F)) * 40.0F;
         ent.rotationPitch = 0;//-((float)Math.atan((double)(mouseY / 40.0F))) * 20.0F;
         ent.rotationYawHead = -45;
         ent.prevRotationYawHead = -45;
 
-        GlStateManager.translate(0.0F, 0.0F, 0.0F);
-        RenderManager rendermanager = Minecraft.getMinecraft().getRenderManager();
+        GlStateManager.translatef(0.0F, 0.0F, 0.0F);
+
+        EntityRendererManager rendermanager = Minecraft.getInstance().getRenderManager();
         rendermanager.setPlayerViewY(180.0F);
         rendermanager.setRenderShadow(false);
         rendermanager.renderEntity(ent, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, false);
@@ -141,8 +136,8 @@ public class GuiTargetInfo extends Gui {
         GlStateManager.popMatrix();
         RenderHelper.disableStandardItemLighting();
         GlStateManager.disableRescaleNormal();
-        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GlStateManager.disableTexture2D();
-        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+        GlStateManager.activeTexture(GLX.GL_TEXTURE1);
+        GlStateManager.disableTexture();
+        GlStateManager.activeTexture(GLX.GL_TEXTURE0);
     }
 }

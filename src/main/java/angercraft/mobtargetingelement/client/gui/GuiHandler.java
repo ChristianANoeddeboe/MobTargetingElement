@@ -3,15 +3,16 @@ package angercraft.mobtargetingelement.client.gui;
 import angercraft.mobtargetingelement.Reference;
 import angercraft.mobtargetingelement.client.MouseOver;
 import angercraft.mobtargetingelement.config.Keybinds;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.entity.EntityLiving;
+import net.minecraft.client.gui.AbstractGui;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.InputEvent;
 
 @Mod.EventBusSubscriber(modid = Reference.MOD_ID)
-public class GuiHandler extends Gui {
+public class GuiHandler extends AbstractGui {
 
     private static GuiTargetInfo guiTargetLock = new GuiTargetInfo();
     private static boolean show = true;
@@ -29,10 +30,11 @@ public class GuiHandler extends Gui {
 
     private static void renderElement(float partialticks) {
         MouseOver mouseOver = new MouseOver();
-        EntityLiving pointedEntity = (EntityLiving) mouseOver.getEntityLookingAt(partialticks, 64.0);
-        if(pointedEntity != null) {
-            guiTargetLock.drawTarget(pointedEntity);
+        Entity lookingAt = mouseOver.getEntityMouseOver(partialticks, 32.0);
+        if(!(lookingAt instanceof LivingEntity)) {
+            return;
         }
+        guiTargetLock.drawTarget((LivingEntity) lookingAt);
     }
 
     @SubscribeEvent
